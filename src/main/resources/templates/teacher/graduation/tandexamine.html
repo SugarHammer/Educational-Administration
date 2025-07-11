@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no'
+          name='viewport'/>
+    <title>教务综合管理系统</title>
+    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/3.3.7/css/bootstrap.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/asserts/css/demo.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{/asserts/css/ready.css}">
+
+    <style>
+        table tr {
+            height: 50px;
+        }
+
+        table td {
+            text-align: center;
+            font-size: 16px;
+        }
+
+        table th {
+            text-align: center;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <!--    引入公共页面 public-index。html 的模块-->
+    <div th:replace="teacher/public-teacher-index :: header"></div>
+    <div th:replace="teacher/public-teacher-index :: left"></div>
+
+
+    <div class="main-panel">
+        <div class="content">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="row">
+                        <div class="col-sm-2"></div>
+                        <div class="col-sm-2">
+
+                            <select class="form-control" id="name">
+                                <option disabled selected style='display:none;'>第一指导教师</option>
+                                <option></option>
+                                <option th:each="p:${list_teahcer}" th:text="${p.name}" th:value="${p.id}"></option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="btn-group" role="group" aria-label="...">
+                                <button type="button" class="btn btn-default" id="all">全部</button>
+                                <button type="button" class="btn btn-default" id="submitted">已提交</button>
+                                <button type="button" class="btn btn-default" id="success">已通过</button>
+                                <button type="button" class="btn btn-default" id="failed">未通过</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <!--<a href="#" style="font-size:15px;">下载全部附件</a>-->
+                        </div>
+                        <div class="col-md-6"><span style="color: red; font-size: 22px">课题审核一旦提交，教师无法删除，请谨慎操作</span>
+                        </div>
+                        <div class="col-md-3"></div>
+                    </div>
+
+
+                    <table class="table table-hover" style="background-color:white;">
+                        <thead>
+                        <tr style="background-color:#00ffff">
+                            <th>序号</th>
+                            <th>课题名称</th>
+                            <th>课题类型</th>
+                            <th>课题来源</th>
+                            <th>适用专业</th>
+                            <th>指导老师</th>
+                            <th>当前状态</th>
+                            <th>课题附件</th>
+                            <th width="150">通过/驳回</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody id="tbody">
+                        <tr th:each="lp, project: ${list_project}">
+                            <td th:text="${project.count}"></td>
+                            <td th:text="${lp.projectname}"></td>
+                            <td th:text="${lp.typeName}"></td>
+                            <td th:text="${lp.sourceName}"></td>
+                            <td th:text="${lp.marchspecialty}"></td>
+                            <td th:text="${lp.teachernames}"></td>
+                            <td th:text="${lp.projectZT}"></td>
+                            <td>
+                                <a th:text="下载附件" th:href="@{/static/file_download(project_id=${lp.id})}"></a>
+                            </td>
+                            <td th:if="${lp.verifyprojectFlag == 0}">
+                                <button type="button" class="btn btn-info btn-xs"
+                                        th:onclick="|studAjax(this,${lp.id})|">通过
+                                </button>
+                                <button type="button" class="btn btn-info btn-xs"
+                                        th:onclick="|studAjax(this,${lp.id})|">驳回
+                                </button>
+                            </td>
+                            <td th:unless="${lp.verifyprojectFlag==0}" th:text="${lp.projectZT}"></td>
+                            <!--<td></td>-->
+
+                            <!--<td th:if="${lp.verifyprojectFlag == 2}"></td>-->
+                            <td th:if="${lp.verifyprojectFlag == 2}">
+                                <a class="btn btn btn-info btn-xs" th:onclick="|reject(${lp.id})|" role="button">驳回</a>
+                            </td>
+
+
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script type="text/javascript" th:src="@{/webjars/jquery/1.9.1/jquery.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/bootstrap/3.3.7/js/bootstrap.min.js}"></script>
+<script type="text/javascript" th:src="@{/asserts/js/ready.min.js}"></script>
+
+<script>
+    function studAjax(ojb, projectID) {
+        var a = $("button").index(ojb);
+        var b = $("button").eq(a);
+        var fb;
+        if ($.trim($(b).html()) === "通过") fb = 2;
+        else fb = 1;
+        $.ajax({
+            url: 'SH_project',
+            type: 'POST',
+            data: {'zt': fb, 'projectID': projectID},
+            async: false,
+            contentType: 'application/x-www-form-urlencoded',
+            dataType: 'json',
+            success: function (PD) {
+                alert("处理成功")
+                window.location.href = "tandexamine";
+            },
+            error: function () {
+                alert("处理失败！");
+            }
+        })
+    }
+
+
+    function reject(projectID) {
+        $.ajax({
+            url: "reject_project",
+            type: "get",
+            data: {'project_id': projectID},
+            async: false,
+            contentType: 'application/x-www-form-urlencoded',
+            dataType: 'json',
+            success: function (result) {
+                if (result.code == 100) {
+                    alert("驳回成功")
+                    window.location.reload()
+                } else {
+                    alert("课题可能为打开状态或者是未取消发布")
+                }
+            }
+        })
+    }
+
+
+    //查询所有课程
+    $("#all").click(function () {
+        var name = $("#name").val()
+        $.ajax({
+            url: "condition_teacher",
+            type: "get",
+            contentType: 'application/x-www-form-urlencoded',
+            async: false,
+            data: {
+                zt: null, id_teacher: name
+            },
+            success: function (result) {
+                build(result)
+            }
+        })
+    })
+
+    //查询提交课程
+    $("#submitted").click(function () {
+        var name = $("#name").val()
+        $.ajax({
+            url: "condition_teacher",
+            type: "get",
+            contentType: 'application/x-www-form-urlencoded',
+            async: false,
+            data: {
+                zt: 0, id_teacher: name
+            },
+            success: function (result) {
+                build(result)
+            }
+        })
+    })
+
+    // 查询成功课程
+    $("#success").click(function () {
+        var name = $("#name").val()
+        $.ajax({
+            url: "condition_teacher",
+            type: "get",
+            contentType: 'application/x-www-form-urlencoded',
+            async: false,
+            data: {
+                zt: 2, id_teacher: name
+            },
+            success: function (result) {
+                build(result)
+            }
+        })
+    })
+    // 查询失败课程
+    $("#failed").click(function () {
+        var name = $("#name").val()
+        $.ajax({
+            url: "condition_teacher",
+            type: "get",
+            contentType: 'application/x-www-form-urlencoded',
+            async: false,
+            data: {
+                zt: 1, id_teacher: name
+            },
+            success: function (result) {
+                build(result)
+            }
+        })
+    })
+
+    function build(result) {
+        $("#tbody").empty()
+        var project = result.extend.projectList;
+        $.each(project, function (index, item) {
+            var Id = $("<td></td>").append(index + 1);
+            var proName = $("<td></td>").append(item.projectname);
+            var proTypeName = $("<td></td>").append(item.typeName);
+            var proSourceName = $("<td></td>").append(item.sourceName);
+            var proTeacherNames = $("<td></td>").append(item.teachernames);
+            var proMarchspecialty = $("<td></td>").append(item.marchspecialty);
+            var proZT = $("<td></td>").append(item.projectZT);
+            // /static/file_download(project_id=${lp.id}
+            var profile = $("<td></td>").append($("<a></a>").append("下载附件").attr("href", "file_download?project_id=" + item.id));
+            if (item.verifyprojectFlag == 0) {
+                var seltBtn = $("<button></button>").addClass("btn btn-info btn-xs").attr("onclick", "studAjax(this," + item.id + ");").append("通过")
+                // studAjax(this,${lp.id}
+                var delBtn = $("<button></button>").addClass("btn btn-info btn-xs").attr("onclick", "studAjax(this," + item.id + ");").append("驳回")
+
+                var btnTd = $("<td></td>").append(seltBtn).append(" ").append(delBtn);
+            } else {
+                var btnTd = $("<td></td>").append(item.projectZT);
+            }
+
+            // <a class="btn btn btn-info btn-xs" th:onclick="|reject(${lp.id})|" role="button">驳回</a>
+            if (item.verifyprojectFlag == 2) {
+                var rejectbtn = $("<button></button>").addClass("btn btn btn-info btn-xs").attr("onclick", "reject(" + item.id + ");")
+                    .attr("role", "button").append("驳回")
+                var rejectTd = $("<td></td>").append(rejectbtn)
+            }else{
+                var rejectTd =$("<td></td>")
+            }
+
+
+                $("<tr></tr>")
+                    .append(Id)
+                    .append(proName)
+                    .append(proTypeName)
+                    .append(proSourceName)
+                    .append(proMarchspecialty)
+                    .append(proTeacherNames)
+                    .append(proZT)
+                    .append(profile)
+                    .append(btnTd)
+                    .append(rejectTd)
+                    .appendTo("#tbody");
+        })
+
+    }
+</script>
+</html>
